@@ -5,13 +5,17 @@ clean:
 install:
 	mkdir -p $(DESTDIR)/etc/anonsurf/
 	mkdir -p $(DESTDIR)/etc/tor/
+	mkdir -p $(DESTDIR)/etc/init/
 	mkdir -p $(DESTDIR)/usr/bin/
 	mkdir -p $(DESTDIR)/usr/share/applications/
+	mkdir -p $(DESTDIR)/usr/lib/systemd/system/
 	cp onion.pac $(DESTDIR)/etc/anonsurf/onion.pac
 	ln -s /etc/anonsurf/onion.pac $(DESTDIR)/etc/tor/onion.pac
 	cp torrc $(DESTDIR)/etc/anonsurf/torrc
 	cp anonsurf.sh $(DESTDIR)/usr/bin/anonsurf
 	cp pandora.sh $(DESTDIR)/usr/bin/pandora
+	cp pandora.service $(DESTDIR)/usr/lib/systemd/system/pandora.service
+	cp pandora.conf $(DESTDIR)/etc/init/pandora.conf
 	cp exitnode-selector $(DESTDIR)/usr/bin/exitnode-selector
 	cp exitnodes.csv $(DESTDIR)/etc/anonsurf/exitnodes.csv
 	chown root:root $(DESTDIR)/usr/bin/anonsurf

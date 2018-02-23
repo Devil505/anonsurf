@@ -47,7 +47,7 @@ TOR_EXCLUDE="192.168.0.0/16 172.16.0.0/12 10.0.0.0/8"
 
 # The UID Tor runs as
 # change it if, starting tor, the command 'ps -e | grep tor' returns a different UID
-TOR_UID="solus-tor"
+TOR_UID="tor"
 
 # Tor's TransPort
 TOR_PORT="9040"
@@ -121,7 +121,7 @@ function stopi2p {
 
 function ip {
 
-	MYIP=`wget -qO- https://start.parrotsec.org/ip/`
+	MYIP=`wget -qO- http://myexternalip.com/raw`
 	echo -e "\nMy ip is:\n"
 	echo $MYIP
 	echo -e "\n"
@@ -334,3 +334,4 @@ esac
 
 echo -e $RESETCOLOR
 exit 0
+
