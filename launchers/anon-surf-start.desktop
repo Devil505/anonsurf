@@ -6,4 +6,4 @@ Terminal=true
 Exec=menuexecg "anonsurf start"
 Name=Anonsurf Start
 Icon=stock_media-play
-Categories=anonsurf;
+Categories=Network;Security;

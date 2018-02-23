@@ -7,5 +7,5 @@ Exec=anonsurf ip
 Name=check IP
 Comment=Print the current IP address
 Icon=network-server
-Categories=anonsurf;
+Categories=Network;Security;
 

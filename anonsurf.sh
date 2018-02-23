@@ -47,7 +47,7 @@ TOR_EXCLUDE="192.168.0.0/16 172.16.0.0/12 10.0.0.0/8"
 
 # The UID Tor runs as
 # change it if, starting tor, the command 'ps -e | grep tor' returns a different UID
-TOR_UID="debian-tor"
+TOR_UID="solus-tor"
 
 # Tor's TransPort
 TOR_PORT="9040"
@@ -85,7 +85,7 @@ function clean_dhcp {
 
 function init {
 	echo -e -n "$BLUE[$GREEN*$BLUE] killing dangerous applications\n"
-	sudo killall -q chrome dropbox iceweasel skype icedove thunderbird firefox firefox-esr chromium xchat hexchat transmission steam
+	sudo killall -q chrome dropbox iceweasel skype thunderbird firefox chromium xchat hexchat transmission steam
 	echo -e -n "$BLUE[$GREEN*$BLUE] Dangerous applications killed\n"
 	notify "Dangerous applications killed"
 
@@ -308,11 +308,8 @@ case "$1" in
 	;;
    *)
 echo -e "
-Parrot AnonSurf Module (v 2.6)
-	Developed by Lorenzo \"Palinuro\" Faletra <palinuro@parrotsec.org>
-		     Lisetta \"Sheireen\" Ferrero <sheireen@parrotsec.org>
-		     Francesco \"Mibofra\" Bonanno <mibofra@parrotsec.org>
-		and a huge amount of Caffeine + some GNU/GPL v3 stuff
+Solus AnonSurf Module (v 0.1)
+	Developed by Devom505 <devil505linux@gmail.com>
 	Usage:
 	$RED┌──[$GREEN$USER$YELLOW@$BLUE`hostname`$RED]─[$GREEN$PWD$RED]
 	$RED└──╼ \$$GREEN"" anonsurf $RED{$GREEN""start$RED|$GREEN""stop$RED|$GREEN""restart$RED|$GREEN""change$RED""$RED|$GREEN""status$RED""}

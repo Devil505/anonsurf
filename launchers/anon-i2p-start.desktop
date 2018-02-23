@@ -6,5 +6,4 @@ Terminal=true
 Exec=anonsurf starti2p
 Name=start i2p
 Icon=stock_media-play
-Categories=anonsurf;
-X-Parrot-Package=i2p
+Categories=Network;Security;

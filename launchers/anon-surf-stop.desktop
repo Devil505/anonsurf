@@ -6,4 +6,4 @@ Terminal=true
 Exec=menuexecg "anonsurf stop"
 Name=Anonsurf Stop
 Icon=player_stop
-Categories=anonsurf;
+Categories=Network;Security;

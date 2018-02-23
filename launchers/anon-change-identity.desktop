@@ -7,5 +7,5 @@ Exec=menuexecg "anonsurf change"
 Name=change exit node
 Comment=Select the exit country to use
 Icon=reload
-Categories=anonsurf;
+Categories=Network;Security;
 
