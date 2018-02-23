@@ -11,6 +11,7 @@ install:
 	ln -s /etc/anonsurf/onion.pac $(DESTDIR)/etc/tor/onion.pac
 	cp torrc $(DESTDIR)/etc/anonsurf/torrc
 	cp anonsurf.sh $(DESTDIR)/usr/bin/anonsurf
+	cp pandora.sh $(DESTDIR)/usr/bin/pandora
 	cp exitnode-selector $(DESTDIR)/usr/bin/exitnode-selector
 	cp exitnodes.csv $(DESTDIR)/etc/anonsurf/exitnodes.csv
 	chown root:root $(DESTDIR)/usr/bin/anonsurf
