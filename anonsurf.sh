@@ -13,7 +13,8 @@
 # Devs:
 # Lorenzo 'EclipseSpark' Faletra <eclipse@frozenbox.org>
 # Lisetta 'Sheireen' Ferrero <sheireen@frozenbox.org>
-# Francesco 'mibofra'/'Eli Aran'/'SimpleSmibs' Bonanno <mibofra@ircforce.tk> <mibofra@frozenbox.org>
+# Francesco 'mibofra'/'Eli Aran'/'SimpleSmibs' Bonanno
+# <mibofra@ircforce.tk> <mibofra@frozenbox.org>
 #
 #
 # anonsurf is free software: you can redistribute it and/or
@@ -30,23 +31,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Parrot Security OS. If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
-
-
-
 export BLUE='\033[1;94m'
+export YELLOW='\033[1;93m'
 export GREEN='\033[1;92m'
 export RED='\033[1;91m'
-export RESETCOLOR='\033[1;00m'
+export RESETCOLOR='\033[5;00m'
 
 
 # Destinations you don't want routed through Tor
 TOR_EXCLUDE="192.168.0.0/16 172.16.0.0/12 10.0.0.0/8"
 
 # The UID Tor runs as
-# change it if, starting tor, the command 'ps -e | grep tor' returns a different UID
+# change it if, starting tor, the command 
+# 'ps -e | grep tor' returns a different UID
 TOR_UID="tor"
 
 # Tor's TransPort
@@ -54,21 +51,10 @@ TOR_PORT="9040"
 
 
 
-
-
-
-
-
-
 function notify {
-	if [ -e /usr/bin/notify-send ]; then
-		/usr/bin/notify-send "AnonSurf" "$1"
-	fi
+    printf "$YELLOW%s\n$RESETCOLOR" "$1"
 }
 export notify
-
-
-
 
 
 function clean_dhcp {
@@ -79,87 +65,91 @@ function clean_dhcp {
 }
 
 
-
-
-
-
 function init {
-	echo -e -n "$BLUE[$GREEN*$BLUE] killing dangerous applications\n"
-	sudo killall -q chrome dropbox iceweasel skype thunderbird firefox chromium xchat hexchat transmission steam
-	echo -e -n "$BLUE[$GREEN*$BLUE] Dangerous applications killed\n"
-	notify "Dangerous applications killed"
+	echo -e "$BLUE[$GREEN*$BLUE] Killing dangerous applications"
+	killall -q chrome dropbox iceweasel skype icedove \
+        thunderbird firefox firefox-esr chromium xchat \
+        hexchat transmission steam
 
-	echo -e -n "$BLUE[$GREEN*$BLUE] cleaning some dangerous cache elements\n"
-	bleachbit -c adobe_reader.cache chromium.cache chromium.current_session chromium.history elinks.history emesene.cache epiphany.cache firefox.url_history flash.cache flash.cookies google_chrome.cache google_chrome.history  links2.history opera.cache opera.search_history opera.url_history &> /dev/null
-	echo -e -n "$BLUE[$GREEN*$BLUE] Cache cleaned\n"
-	notify "Cache cleaned"
+	echo -e "$BLUE[$GREEN*$BLUE] Cleaning some dangerous cache elements"
+	bleachbit -c adobe_reader.cache chromium.cache chromium.current_session \
+        chromium.history elinks.history emesene.cache epiphany.cache \
+        firefox.url_history flash.cache flash.cookies google_chrome.cache \
+        google_chrome.history  links2.history opera.cache opera.search_history \
+        opera.url_history &> /dev/null
 }
-
-
-
-
-
 
 
 
 function starti2p {
-	echo -e -n " $GREEN*$BLUE starting I2P services\n"
-	gksu service i2p start
-	firefox http://127.0.0.1:7657/home &
-	echo -e -n "$BLUE[$GREEN*$BLUE] I2P daemon started\n"
-	notify "I2P daemon started"
+	echo -e "$BLUE[$GREEN*$BLUE] Starting I2P services"
+    sudo systemctl start i2prouter.service || \
+        { echo -e "$BLUE[$RED*$BLUE] I2P daemon failed"; exit; }
+    while : ; do
+        sleep 2
+        ! $(systemctl -q is-active i2prouter.service) || break
+    done 
+	echo -e "$BLUE[$GREEN*$BLUE] Starting firefox at I2P homepage"
+    firefox http://127.0.0.1:7657/home >/dev/null &
+    echo -e "$BLUE[$GREEN*$BLUE] I2P daemon started"
 }
 
 function stopi2p {
-	echo -e -n "$BLUE[$GREEN*$BLUE] Stopping I2P services\n"
-	gksu service i2p stop
-	echo -e -n "$BLUE[$GREEN*$BLUE] I2P daemon stopped\n"
-	notify "I2P daemon stopped"
+	echo -e "$BLUE[$GREEN*$BLUE] Stopping I2P services"
+	sudo systemctl stop i2prouter.service 
+	echo -e "$BLUE[$GREEN*$BLUE] I2P daemon stopped"
 }
 
 
 
 function ip {
-
-	MYIP=`wget -qO- http://myexternalip.com/raw`
-	echo -e "\nMy ip is:\n"
-	echo $MYIP
-	echo -e "\n"
-	notify "My IP is:\n\n$MYIP"
+	MYIP=`curl --silent https://start.parrotsec.org/ip/`
+    printf "$YELLOW%s$RESETCOLOR" "$MYIP"
 }
-
+export ip
 
 
 function start {
 	# Make sure only root can run this script
 	if [ $(id -u) -ne 0 ]; then
-		echo -e -e "\n$GREEN[$RED!$GREEN] $RED R U DRUNK?? This script must be run as root$RESETCOLOR\n" >&2
+		echo -e -e "\n$GREEN[$RED!$GREEN] $RED R U DRUNK??"\
+            " This script must be run as root\n" >&2
 		exit 1
 	fi
 
-	echo -e "\n$GREEN[$BLUE i$GREEN ]$BLUE Starting anonymous mode:$RESETCOLOR\n"
+	 notify "Starting anonymous mode"
 
-	if [ ! -e /tmp/tor.pid ]; then
-		echo -e " $RED*$BLUE Tor is not running! $GREEN starting it $BLUE for you" >&2
-		echo -e -n "\n $GREEN*$BLUE Stopping service nscd"
-		service nscd stop 2>/dev/null || echo " (already stopped)"
-		echo -e -n "\n $GREEN*$BLUE Stopping service resolvconf"
-		service resolvconf stop 2>/dev/null || echo " (already stopped)"
-		echo -e -n "\n $GREEN*$BLUE Stopping service dnsmasq"
-		service dnsmasq stop 2>/dev/null || echo " (already stopped)"
-		killall dnsmasq nscd resolvconf 2>/dev/null || true
+    if ! $(systemctl -q is-active tor.service); then
+		echo -e "$BLUE[$RED*$BLUE] Tor is not running!$GREEN"\
+            "starting it$BLUE for you" >&2
+
+		echo -e -n "$BLUE[$GREEN*$BLUE] Stopping service nscd$RED"
+        $(systemctl -q is-active nscd) && \
+            { systemctl stop nscd; echo; } || \
+                echo -e "$BLUE (already stopped)"
+
+		echo -e -n "$BLUE[$GREEN*$BLUE] Stopping service systemd-resolved$RED"
+        $(systemctl -q is-active systemd-resolved) && \
+            { systemctl stop systemd-resolved; echo; } || \
+                echo -e "$BLUE (already stopped)"
+
+		echo -e -n "$BLUE[$GREEN*$BLUE] Stopping service dnsmasq$RED"
+		$(systemctl -q is-active dnsmasq) && \
+            { systemctl stop dnsmasq; echo; } || \
+                echo -e "$BLUE (already stopped)"
+
+		killall dnsmasq nscd 2>/dev/null || true
 		sleep 2
 		killall -9 dnsmasq 2>/dev/null || true
-		service resolvconf start 
-		sleep 5
+
 		systemctl start tor
-		sleep 20
+		sleep 5
 	fi
 
 
-	if ! [ -f /etc/network/iptables.rules ]; then
-		iptables-save > /etc/network/iptables.rules
-		echo -e "\n $GREEN*$BLUE Saved iptables rules\n"
+	if ! [ -f /etc/iptables/iptables.rules ]; then
+		iptables-save > /etc/iptables/iptables.rules
+		echo -e " $GREEN*$BLUE Saved iptables rules$RED"
 	fi
 
 	iptables -F
@@ -167,13 +157,16 @@ function start {
 
 	cp /etc/resolv.conf /etc/resolv.conf.bak
 	touch /etc/resolv.conf
-	echo -e 'nameserver 127.0.0.1\nnameserver 92.222.97.145\nnameserver 192.99.85.244' > /etc/resolv.conf
-	echo -e " $GREEN*$BLUE Modified resolv.conf to use Tor and ParrotDNS\n"
+	echo -e "nameserver 127.0.0.1\nnameserver 92.222.97.145\n"\
+"nameserver 192.99.85.244" > /etc/resolv.conf
+	echo -e "$BLUE[$GREEN*$BLUE] Modified resolv.conf to use Tor and ParrotDNS$RED"
 
 	# disable ipv6
-	sysctl -w net.ipv6.conf.all.disable_ipv6=1
-	sysctl -w net.ipv6.conf.default.disable_ipv6=1
+	echo -e "$BLUE[$GREEN*$BLUE] Disable ipv6$RED"
+	sysctl -w net.ipv6.conf.all.disable_ipv6=1 1>/dev/null
+	sysctl -w net.ipv6.conf.default.disable_ipv6=1 1>/dev/null
 
+	echo -e "$BLUE[$GREEN*$BLUE] Set iptables rules$RED"
 	# set iptables nat
 	iptables -t nat -A OUTPUT -m owner --uid-owner $TOR_UID -j RETURN
 
@@ -204,12 +197,10 @@ function start {
 	iptables -A OUTPUT -m owner --uid-owner $TOR_UID -j ACCEPT
 	iptables -A OUTPUT -j REJECT
 
-	echo -e "$GREEN *$BLUE All traffic was redirected throught Tor\n"
-	echo -e "$GREEN[$BLUE i$GREEN ]$BLUE You are under AnonSurf tunnel$RESETCOLOR\n"
-	notify "Global Anonymous Proxy Activated"
-	sleep 1
-	notify "Dance like no one's watching. Encrypt like everyone is :)"
-	sleep 10
+	echo -e "$BLUE[$GREEN*$BLUE] All traffic was redirected throught Tor\n"
+	# echo -e "$GREEN[$BLUE i$GREEN ]$BLUE You are under AnonSurf tunnel\n"
+    notify "Global Anonymous Proxy Activated - $(ip)"
+    notify "Dance like no one's watching. Encrypt like everyone is :)"
 }
 
 
@@ -219,44 +210,50 @@ function start {
 function stop {
 	# Make sure only root can run our script
 	if [ $(id -u) -ne 0 ]; then
-		echo -e "\n$GREEN[$RED!$GREEN] $RED R U DRUNK?? This script must be run as root$RESETCOLOR\n" >&2
+		echo -e "\n$GREEN[$RED!$GREEN] $RED R U DRUNK?? "\
+            "This script must be run as root\n" >&2
 		exit 1
 	fi
-	echo -e "\n$GREEN[$BLUE i$GREEN ]$BLUE Stopping anonymous mode:$RESETCOLOR\n"
+	notify "Stopping anonymous mode"
 
 	iptables -F
 	iptables -t nat -F
-	echo -e "\n $GREEN*$BLUE Deleted all iptables rules"
+	echo -e "$BLUE[$GREEN*$BLUE] Deleted all iptables rules$RED"
 
-	if [ -f /etc/network/iptables.rules ]; then
-		iptables-restore < /etc/network/iptables.rules
-		rm /etc/network/iptables.rules
-		echo -e "\n $GREEN*$BLUE Iptables rules restored"
+	if [ -f /etc/iptables/iptables.rules ]; then
+		iptables-restore < /etc/iptables/iptables.rules
+		# rm /etc/network/iptables.rules
+		echo -e "$BLUE[$GREEN*$BLUE] Iptables rules restored$RED"
 	fi
-	echo -e -n "\n $GREEN*$BLUE Restore DNS service"
+	echo -e "$BLUE[$GREEN*$BLUE] Restore DNS service$RED"
 	if [ -e /etc/resolv.conf.bak ]; then
 		rm /etc/resolv.conf
 		cp /etc/resolv.conf.bak /etc/resolv.conf
 	fi
 
 	# re-enable ipv6
-	sysctl -w net.ipv6.conf.all.disable_ipv6=0
-	sysctl -w net.ipv6.conf.default.disable_ipv6=0
+	echo -e "$BLUE[$GREEN*$BLUE] Renable ipv6$RED"
+	sysctl -w net.ipv6.conf.all.disable_ipv6=0 1>/dev/null
+	sysctl -w net.ipv6.conf.default.disable_ipv6=0 1>/dev/null
 
-	service tor stop
+	systemctl stop tor
 	sleep 2
-	killall tor
-	sleep 6
-	echo -e -n "\ $GREEN*$BLUE Restarting services\n"
-	service resolvconf start || service resolvconf restart || true
-	service dnsmasq start || true
-	service nscd start || true
-	echo -e " $GREEN*$BLUE It is safe to not worry for dnsmasq and nscd start errors if they are not installed or started already."
+	killall tor 2>/dev/null || true
+
+	echo -e -n "$BLUE[$GREEN*$BLUE] Restarting services\n$RED"
+	(! $(systemctl -q is-active systemd-resolved) && \
+        $(systemctl -q is-enabled systemd-resolved)) && \
+        systemctl start systemd-resolved
+	(! $(systemctl -q is-active dnsmasq) && \
+        $(systemctl -q is-enabled dnsmasq)) && systemctl start dnsmasq
+	(! $(systemctl -q is-active nscd) && \
+        $(systemctl -q is-enabled nscd)) && systemctl start nscd
+	echo -e "$BLUE[$GREEN!$BLUE] It is safe to not worry for dnsmasq and"\
+        "nscd start errors\n    if they are not installed or started already."
 	sleep 1
 
-	echo -e " $GREEN*$BLUE Anonymous mode stopped\n"
-	notify "Global Anonymous Proxy Closed - Stop dancing :("
-	sleep 4
+	echo -e "$BLUE[$GREEN*$BLUE] Anonymous mode stopped\n$RESETCOLOR"
+	notify "Global Anonymous Proxy Closed - Stop dancing :(" 
 }
 
 function change {
@@ -268,19 +265,26 @@ function change {
 }
 
 function status {
-	service tor@default status
-	cat /tmp/anonsurf-tor.log || cat /var/log/tor/log
+    $(systemctl -q is-active tor.service) && \
+        notify "AnonSurf is Active - Keep dancing" || \
+        notify "AnonSurf is not active - Everyone is watching"
 }
 
 
 
 case "$1" in
 	start)
-		zenity --question --text="Do you want anonsurf to kill dangerous applications and clean some application caches?" && init
+        echo -e $BLUE
+        read -n 1 -rp $'Do you want anonsurf to kill dangerous applications\nand clean some application caches (Y/n) : '
+        [[ $REPLY  =~ ^([Yy]$|$) ]] && init
+        echo
 		start
 	;;
 	stop)
-		zenity --question --text="Do you want anonsurf to kill dangerous applications and clean some application caches?" && init
+        echo -e $BLUE
+        read -n 1 -rp $'Do you want anonsurf to kill dangerous applications\nand clean some application caches (Y/n) : '
+        [[ $REPLY  =~ ^([Yy]$|$) ]] && init
+        echo
 		stop
 	;;
 	change)
@@ -308,11 +312,16 @@ case "$1" in
 	;;
    *)
 echo -e "
-Solus AnonSurf Module (v 0.1)
-	Developed by Devom505 <devil505linux@gmail.com>
+Parrot AnonSurf Module (v 2.5)
+	Developed by Lorenzo \"Palinuro\" Faletra <palinuro@parrotsec.org>
+		     Lisetta \"Sheireen\" Ferrero <sheireen@parrotsec.org>
+		     Francesco \"Mibofra\" Bonanno <mibofra@parrotsec.org>
+		and a huge amount of Caffeine + some GNU/GPL v3 stuff
 	Usage:
 	$RED┌──[$GREEN$USER$YELLOW@$BLUE`hostname`$RED]─[$GREEN$PWD$RED]
-	$RED└──╼ \$$GREEN"" anonsurf $RED{$GREEN""start$RED|$GREEN""stop$RED|$GREEN""restart$RED|$GREEN""change$RED""$RED|$GREEN""status$RED""}
+	$RED└──╼ \$$GREEN"" anonsurf $RED{$GREEN"\
+        "start$RED|$GREEN""stop$RED|$GREEN""restart$RED|$GREEN"\
+        "change$RED""$RED|$GREEN""status$RED""}
 
 	$RED start$BLUE -$GREEN Start system-wide TOR tunnel	
 	$RED stop$BLUE -$GREEN Stop anonsurf and return to clearnet
